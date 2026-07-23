@@ -1,0 +1,8 @@
+#createMockInterviewPage {
+  max-width: 800px;
+  width: 60%;
+  margin: 0 auto;
+  background: #fff;
+  padding: 32px;
+  border-radius: 12px;
+}

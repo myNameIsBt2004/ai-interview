@@ -1,0 +1,44 @@
+.records-page h1 {
+  margin: 8px 0 20px;
+  font-size: 24px;
+}
+
+.records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.record-card {
+  padding: 20px 22px;
+}
+
+.record-card h2 {
+  margin: 10px 0 14px;
+  font-size: 20px;
+}
+
+.record-card .meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
+  color: var(--text);
+}
+
+.record-card .meta span {
+  color: var(--muted);
+  margin-right: 10px;
+}
+
+.record-footer {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .record-card .meta {
+    grid-template-columns: 1fr;
+  }
+}

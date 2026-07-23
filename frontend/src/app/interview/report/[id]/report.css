@@ -1,0 +1,169 @@
+.report-page h1 {
+  margin: 0 0 14px;
+  font-size: 26px;
+}
+
+.report-page h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.report-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px;
+  margin-bottom: 16px;
+}
+
+.hero-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 28px;
+  font-size: 14px;
+}
+
+.hero-meta span {
+  color: var(--muted);
+  margin-right: 8px;
+}
+
+.score-text .num {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.score-text .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.section {
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.summary {
+  margin: 0;
+  line-height: 1.8;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.observe,
+.advice {
+  padding: 16px 18px;
+}
+
+.observe {
+  background: #fff8e8;
+  border-color: #ffe2a8;
+}
+
+.advice {
+  background: #edf9f0;
+  border-color: #b7e3c2;
+}
+
+.observe ul,
+.advice ul,
+.box ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  line-height: 1.7;
+}
+
+.ability-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ability-head {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.box {
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.box.green {
+  background: #edf9f0;
+}
+
+.box.yellow {
+  background: #fff8e8;
+}
+
+.qa-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.q-tag {
+  background: var(--brand);
+  color: #1f2329;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.q-preview {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.qa-body h4 {
+  margin: 10px 0 6px;
+}
+
+.answer-box {
+  background: #f5f6f8;
+  border-radius: 8px;
+  padding: 12px;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 800px) {
+  .report-hero,
+  .two-col,
+  .ability-head,
+  .hero-meta {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .report-hero {
+    display: flex;
+    flex-direction: column;
+  }
+}

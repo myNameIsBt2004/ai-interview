@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: ai-interview
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ai_interview?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+
+server:
+  address: 0.0.0.0
+  port: 8101
+  servlet:
+    context-path: /api
+    session:
+      timeout: 30d
+      cookie:
+        max-age: 2592000
+        same-site: lax
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath:/mapper/**/*.xml
+
+# 密钥不要写在这里。本地请用 application-local.yml 或环境变量 AI_API_KEY / AI_MODEL
+ai:
+  apiKey: ${AI_API_KEY:}
+  model: ${AI_MODEL:deepseek-v3-250324}

@@ -1,0 +1,6 @@
+# 本地私有配置（此文件已被 .gitignore 忽略，不会提交到仓库）
+# 复制本文件为 application-local.yml 后填写真实值，并用 profile=local 启动
+
+ai:
+  apiKey: 请填写你的火山方舟APIKey
+  model: 请填写模型ID或推理接入点ID
