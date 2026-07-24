@@ -250,16 +250,18 @@ npm run dev
 ## 界面展示
 <img width="983" height="790" alt="image-20260724160312224" src="https://github.com/user-attachments/assets/a67b1a2f-70b5-4985-a591-17f57f2a9d3a" />
 <img width="991" height="797" alt="63fb8fbfa007acf37cd0e6dfe0d5d064" src="https://github.com/user-attachments/assets/ffb84a92-8316-4ce1-8a54-c9d04d4f4aab" />
-
+<img width="1105" height="641" alt="e459122363340bae2ff22ef29f0ffa3d" src="https://github.com/user-attachments/assets/617c5897-d808-4ffe-ace7-350bf9ac93ce" />
+<img width="1870" height="832" alt="3b6d18679037cd77a36de0fb107360c8" src="https://github.com/user-attachments/assets/3b67c10c-e24f-4be5-a0d4-d8249cd72a56" />
+<img width="1191" height="732" alt="af2cc4e2027f37576623c6dd5854d496" src="https://github.com/user-attachments/assets/04ec7c43-f58d-4100-8570-d482d066fa5b" />
 
 
 
 ## 面试报告展示
+<img width="1032" height="817" alt="image-20260724160445420" src="https://github.com/user-attachments/assets/09b1be85-1c10-4d30-bf17-547a85d488bf" />
+<img width="1047" height="793" alt="image-20260724160531619" src="https://github.com/user-attachments/assets/08b956f5-3f9a-40f1-ab54-a4e06d04bbb2" />
+<img width="965" height="808" alt="image-20260724160549115" src="https://github.com/user-attachments/assets/76821a50-8006-4b0f-a837-095fefc1b276" />
+<img width="947" height="787" alt="image-20260724160559808" src="https://github.com/user-attachments/assets/1b1b918a-8929-44a6-a1bf-deae68e7e9d5" />
 
-![image-20260724160445420](README.assets/image-20260724160445420.png)
 
-![image-20260724160531619](README.assets/image-20260724160531619.png)
 
-![image-20260724160549115](README.assets/image-20260724160549115.png)
 
-![image-20260724160559808](README.assets/image-20260724160559808.png)
