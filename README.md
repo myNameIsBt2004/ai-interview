@@ -97,10 +97,10 @@ npm run dev
 1. 打开 `/user/login`，使用 `admin / 12345678` 登录（或先注册）
 2. 进入「开始面试」多步配置：
    - 目标岗位（岗位/年限/薪资/描述）
-   - 个人信息（上传简历 + 补充信息）
+   - 个人信息（上传简历自动解析 + 补充信息）
    - 面试设置（时长/难度/面试官）
 3. 进入面试间：可开关摄像头、麦克风语音转文字、扬声器朗读、跳过语音、手动输入
-4. 结束面试后查看评估报告与「我的记录」
+4. 结束面试后由后端生成结构化评估报告，可在「我的记录」中查看
 
 ### 前端主要页面
 
@@ -111,13 +111,22 @@ npm run dev
 | `/interview/records` | 我的面试记录 |
 | `/interview/report/[id]` | 评估报告 |
 
+### 主要后端接口
+
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/api/user/login` | 登录 |
 | POST | `/api/user/register` | 注册 |
-| POST | `/api/mockInterview/add` | 创建模拟面试 |
+| POST | `/api/resume/parse` | 上传简历并解析（multipart `file`） |
+| POST | `/api/mockInterview/add` | 创建模拟面试（含岗位/个人信息/设置） |
 | GET  | `/api/mockInterview/get?id=` | 获取面试详情 |
 | POST | `/api/mockInterview/handleEvent` | 处理 start/chat/end 事件 |
+| GET  | `/api/mockInterview/report/get?id=` | 获取结构化评估报告 |
+| POST | `/api/mockInterview/my/list/page/vo` | 我的面试记录分页 |
+
+报告页支持雷达图能力分析、技术技能矩阵、学习路线图、题目解析，并可 **下载 PDF 报告**。
+
+已有库升级请执行：`ai-interview/sql/alter_mock_interview_v2.sql`
 
 ## 说明
 

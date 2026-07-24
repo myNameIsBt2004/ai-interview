@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Input, Modal, Tag, message } from "antd";
+import { Button, Input, Modal, message } from "antd";
 import {
   AudioMutedOutlined,
   AudioOutlined,
+  CheckCircleFilled,
+  ClockCircleOutlined,
+  ExclamationCircleFilled,
+  HistoryOutlined,
+  HomeOutlined,
   PhoneOutlined,
   SoundOutlined,
   VideoCameraOutlined,
@@ -14,12 +19,15 @@ import {
   getMockInterviewByIdUsingGet,
   handleMockInterviewEventUsingPost,
 } from "@/api/mockInterviewController";
+import { getAsrConfigUsingGet, recognizeAsrUsingPost } from "@/api/asrController";
 import {
   InterviewRecord,
+  interviewerShortName,
   loadSetup,
   saveRecord,
 } from "@/libs/interviewStore";
 import { speakNatural, stopSpeaking, warmUpVoices } from "@/libs/speech";
+import { WavRecorder } from "@/libs/wavRecorder";
 import "./room.css";
 
 type ChatMsg = {
@@ -42,11 +50,6 @@ function parseMessages(raw?: string): ChatMsg[] {
   }
 }
 
-function estimateScore(text: string) {
-  const len = text?.length || 0;
-  return Math.min(95, Math.max(55, 60 + Math.floor(len / 80)));
-}
-
 export default function InterviewRoomPage() {
   const params = useParams();
   const id = Number(params?.id);
@@ -63,10 +66,19 @@ export default function InterviewRoomPage() {
   const [cameraOn, setCameraOn] = useState(true);
   const [speakerOn, setSpeakerOn] = useState(true);
   const [listening, setListening] = useState(false);
+  const [recognizing, setRecognizing] = useState(false);
+  const [endConfirmOpen, setEndConfirmOpen] = useState(false);
+  const [doneOpen, setDoneOpen] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const recognitionRef = useRef<any>(null);
+  const wavRecorderRef = useRef<WavRecorder | null>(null);
+  const asrEnabledRef = useRef<boolean | null>(null);
+  const micOnRef = useRef(false);
+  const recognizeSeqRef = useRef(0);
+  const nextAppendRef = useRef(0);
+  const pendingTextRef = useRef<Map<number, string>>(new Map());
+  const inflightRef = useRef(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<string>(new Date().toISOString().replace("T", " ").slice(0, 19));
 
@@ -75,7 +87,11 @@ export default function InterviewRoomPage() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      message.error("面试 ID 无效");
+      router.replace("/interview/setup");
+      return;
+    }
     (async () => {
       try {
         const res = await getMockInterviewByIdUsingGet({ id });
@@ -84,10 +100,11 @@ export default function InterviewRoomPage() {
         setStarted(data.status === 1);
         setEnded(data.status === 2);
       } catch {
-        message.error("加载面试失败");
+        message.error("这场面试不存在或已删除，请重新开始");
+        router.replace("/interview/setup");
       }
     })();
-  }, [id]);
+  }, [id, router]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -129,66 +146,138 @@ export default function InterviewRoomPage() {
 
   const speak = (text: string) => {
     if (!speakerOn) return;
-    speakNatural(text);
+    void speakNatural(text);
   };
 
   const skipVoice = () => {
     stopSpeaking();
   };
 
-  const toggleMic = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      message.warning("这个浏览器不支持语音识别，直接打字吧");
+  const ensureAsrEnabled = async () => {
+    if (asrEnabledRef.current != null) return asrEnabledRef.current;
+    try {
+      const res = await getAsrConfigUsingGet();
+      asrEnabledRef.current = !!res.data?.enabled;
+    } catch {
+      asrEnabledRef.current = false;
+    }
+    return asrEnabledRef.current;
+  };
+
+  const flushPendingText = () => {
+    const pending = pendingTextRef.current;
+    while (pending.has(nextAppendRef.current)) {
+      const text = pending.get(nextAppendRef.current) || "";
+      pending.delete(nextAppendRef.current);
+      nextAppendRef.current += 1;
+      if (text) {
+        setInput((prev) => (prev ? `${prev}${text}` : text));
+      }
+    }
+  };
+
+  /** 并行识别，按说话顺序追加；静音段失败静默忽略 */
+  const enqueueRecognize = (blob: Blob) => {
+    if (blob.size < 1200) return;
+    const seq = recognizeSeqRef.current++;
+    inflightRef.current += 1;
+    setRecognizing(true);
+
+    void (async () => {
+      try {
+        const res = await recognizeAsrUsingPost(blob, "speech.wav");
+        const text = (res.data?.text || "").trim();
+        pendingTextRef.current.set(seq, text);
+        flushPendingText();
+      } catch (e: any) {
+        pendingTextRef.current.set(seq, "");
+        flushPendingText();
+        const msg = String(e?.message || "");
+        // 静音/无有效语音：正常情况，不弹窗
+        const isSilence =
+          /no valid speech|normal silence|silence audio|no speech|无有效语音|静音/i.test(
+            msg,
+          );
+        if (isSilence) return;
+        if (micOnRef.current) {
+          message.warning(msg || "有一段没听清，请继续说或改打字");
+        } else {
+          message.error(msg || "语音转文字失败");
+        }
+      } finally {
+        inflightRef.current = Math.max(0, inflightRef.current - 1);
+        if (inflightRef.current === 0) setRecognizing(false);
+      }
+    })();
+  };
+
+  /** 持续听写：开一次麦克风，边说边转文字；再点一次结束 */
+  const toggleMic = async () => {
+    if (micOn) {
+      micOnRef.current = false;
+      setListening(false);
+      setMicOn(false);
+      const recorder = wavRecorderRef.current;
+      wavRecorderRef.current = null;
+      if (!recorder) return;
+      try {
+        await recorder.stop();
+        const start = Date.now();
+        while (inflightRef.current > 0 && Date.now() - start < 8000) {
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        message.success("已结束听写，确认文字后点发送");
+      } catch {
+        /* ignore */
+      }
       return;
     }
-    if (micOn) {
-      recognitionRef.current?.stop();
+
+    skipVoice();
+    try {
+      const enabled = await ensureAsrEnabled();
+      if (!enabled) {
+        message.error(
+          "当前无法语音转文字：请配置火山语音凭证并开通录音文件识别后重启后端",
+        );
+        return;
+      }
+      recognizeSeqRef.current = 0;
+      nextAppendRef.current = 0;
+      pendingTextRef.current.clear();
+      inflightRef.current = 0;
+
+      const recorder = new WavRecorder();
+      await recorder.startContinuous({
+        onSegment: (blob) => enqueueRecognize(blob),
+        silenceMs: 700,
+        minSpeechMs: 320,
+        maxSegmentMs: 5000,
+        silenceThreshold: 0.012,
+      });
+      wavRecorderRef.current = recorder;
+      micOnRef.current = true;
+      setMicOn(true);
+      setListening(true);
+      message.success("持续听写已开启：停顿片刻会自动出字；说完再点麦克风结束");
+    } catch {
+      message.error("无法打开麦克风，请检查浏览器权限");
+      micOnRef.current = false;
       setMicOn(false);
       setListening(false);
-      return;
     }
-    const recognition = new SpeechRecognition();
-    recognition.lang = "zh-CN";
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.onresult = (event: any) => {
-      let finalText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) finalText += event.results[i][0].transcript;
-      }
-      if (finalText) setInput((prev) => (prev ? `${prev}${finalText}` : finalText));
-    };
-    recognition.onerror = () => {
-      setListening(false);
-      message.warning("语音识别出了点问题，可以改成打字");
-    };
-    recognition.onend = () => {
-      setListening(false);
-      if (micOn) {
-        try {
-          recognition.start();
-          setListening(true);
-        } catch {
-          /* ignore */
-        }
-      }
-    };
-    recognitionRef.current = recognition;
-    recognition.start();
-    setMicOn(true);
-    setListening(true);
-    message.success("麦克风开了，直接说就行");
   };
 
   const callEvent = async (event: string, msg?: string) => {
     setLoading(true);
     try {
+      const durationMinutes = Math.max(1, Math.round(seconds / 60) || 1);
       const res = await handleMockInterviewEventUsingPost({
         event,
         id,
         message: msg,
+        durationMinutes:
+          event === "end" || event === "chat" ? durationMinutes : undefined,
       });
       const userText = msg || (event === "start" ? "我准备好了，开始吧" : "面试结束");
       const aiText = res.data || "";
@@ -204,7 +293,7 @@ export default function InterviewRoomPage() {
           ...messages,
           { role: "user", content: userText },
           { role: "assistant", content: aiText },
-        ]);
+        ], durationMinutes);
       } else if (event !== "end") {
         speak(aiText);
       }
@@ -217,60 +306,43 @@ export default function InterviewRoomPage() {
     }
   };
 
-  const finishAndSave = (summary: string, allMsgs: ChatMsg[]) => {
+  const finishAndSave = (
+    summary: string,
+    allMsgs: ChatMsg[],
+    durationMinutes: number,
+  ) => {
     skipVoice();
-    recognitionRef.current?.stop();
+    micOnRef.current = false;
+    const recorder = wavRecorderRef.current;
+    wavRecorderRef.current = null;
+    if (recorder?.isRecording()) {
+      void recorder.stop();
+    }
     setMicOn(false);
+    setListening(false);
     const record: InterviewRecord = {
       id,
       interviewType: setup?.interviewType || "综合面试",
       jobPosition: setup?.jobPosition || "未知岗位",
       difficulty: setup?.difficulty || "中等",
       companyName: setup?.companyName,
-      durationMinutes: Math.max(1, Math.round(seconds / 60) || 1),
-      score: estimateScore(summary),
+      durationMinutes,
       status: "completed",
       startTime: startTimeRef.current,
       summary,
       messages: allMsgs,
     };
     saveRecord(record);
-    Modal.confirm({
-      title: "面试已顺利完成！",
-      icon: null,
-      content: (
-        <div>
-          <p>您的专业表现正在生成详细评估报告中...</p>
-          <p>报告将包含：综合点评、优缺点分析、改进建议、细致的问答表现分析等</p>
-          <div
-            style={{
-              background: "#eaf3ff",
-              padding: "10px 12px",
-              borderRadius: 8,
-              marginTop: 8,
-            }}
-          >
-            预计数秒内可查看（本演示版即时生成）
-          </div>
-        </div>
-      ),
-      okText: "查看报告",
-      cancelText: "返回首页",
-      onOk: () => router.push(`/interview/report/${id}`),
-      onCancel: () => router.push("/interview/setup"),
-    });
+    setEndConfirmOpen(false);
+    setDoneOpen(true);
   };
 
   const confirmEnd = () => {
-    Modal.confirm({
-      title: "结束面试",
-      content: "确定要结束面试吗？结束后将生成评估报告。",
-      okText: "确定",
-      cancelText: "取消",
-      onOk: async () => {
-        await callEvent("end");
-      },
-    });
+    setEndConfirmOpen(true);
+  };
+
+  const handleConfirmEnd = async () => {
+    await callEvent("end");
   };
 
   const send = async () => {
@@ -334,10 +406,10 @@ export default function InterviewRoomPage() {
               !started
                 ? "请先开始面试"
                 : micOn
-                  ? listening
-                    ? "正在听你说..."
-                    : "语音识别中，也可继续手动输入"
-                  : "麦克风已关闭，可手动输入或在控制栏开启麦克风"
+                  ? recognizing
+                    ? "听写中，文字会自动出现..."
+                    : "持续听写中，停顿约0.7秒会自动出字"
+                  : "可打字，或点麦克风开启持续听写"
             }
           />
           <Button type="primary" disabled={!started || ended} loading={loading} onClick={send}>
@@ -350,8 +422,10 @@ export default function InterviewRoomPage() {
         <div className="video-card card">
           <div className="video-label">AI 面试官</div>
           <div className="ai-avatar">
-            <div className="ai-face">{setup?.interviewer || "AI"}</div>
-            <Tag color="gold">仅展示形象，无需摄像头</Tag>
+            <div className="ai-face">
+              {interviewerShortName(setup?.interviewer)}
+            </div>
+            <div className="ai-avatar-tip">仅展示形象，无需摄像头</div>
           </div>
         </div>
         <div className="video-card card">
@@ -367,7 +441,8 @@ export default function InterviewRoomPage() {
           <ul>
             <li>面试官说完后，可语音作答或手动输入，然后点击发送</li>
             <li>可以说完后点击发送；也可随时结束面试生成报告</li>
-            <li>语音异常时可关闭麦克风，改用文字输入</li>
+            <li>点麦克风开启持续听写，边说边出字；说完再点一次结束</li>
+            <li>识别异常时可直接打字发送</li>
           </ul>
         </div>
       </aside>
@@ -375,11 +450,13 @@ export default function InterviewRoomPage() {
       <div className="control-bar card">
         <button
           className={`ctrl ${micOn ? "on" : "off"}`}
-          onClick={toggleMic}
+          onClick={() => void toggleMic()}
           disabled={!started || ended}
         >
           {micOn ? <AudioOutlined /> : <AudioMutedOutlined />}
-          <span>{micOn ? "静音" : "解除静音"}</span>
+          <span>
+            {micOn ? (recognizing ? "听写中..." : "结束听写") : "开始听写"}
+          </span>
         </button>
         <button
           className={`ctrl ${speakerOn ? "on" : "off"}`}
@@ -400,6 +477,77 @@ export default function InterviewRoomPage() {
           <span>结束面试</span>
         </button>
       </div>
+
+      <Modal
+        open={endConfirmOpen}
+        onCancel={() => setEndConfirmOpen(false)}
+        footer={null}
+        centered
+        width={420}
+        closable={false}
+        className="room-end-modal"
+        maskClosable={false}
+      >
+        <div className="end-confirm">
+          <div className="end-confirm-head">
+            <ExclamationCircleFilled className="end-confirm-icon" />
+            <span className="end-confirm-title">结束面试</span>
+          </div>
+          <p className="end-confirm-desc">
+            确定要结束面试吗？结束后将生成报告。
+          </p>
+          <div className="end-confirm-actions">
+            <Button onClick={() => setEndConfirmOpen(false)}>取消</Button>
+            <Button type="primary" loading={loading} onClick={handleConfirmEnd}>
+              确定
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={doneOpen}
+        footer={null}
+        centered
+        width={480}
+        closable={false}
+        className="room-done-modal"
+        maskClosable={false}
+      >
+        <div className="done-modal">
+          <CheckCircleFilled className="done-check" />
+          <h2>面试已顺利完成！</h2>
+          <p className="done-sub">您的专业表现正在生成详细评估报告中...</p>
+          <p className="done-desc">
+            报告将包含：综合点评、优缺点分析、改进建议、细致的问答表现分析等
+          </p>
+          <div className="done-eta">
+            <ClockCircleOutlined />
+            <span>预计3-5分钟内完成</span>
+          </div>
+          <div className="done-actions">
+            <Button
+              icon={<HomeOutlined />}
+              onClick={() => {
+                setDoneOpen(false);
+                router.push("/");
+              }}
+            >
+              返回首页
+            </Button>
+            <Button
+              type="primary"
+              icon={<HistoryOutlined />}
+              onClick={() => {
+                setDoneOpen(false);
+                router.push("/interview/records");
+              }}
+            >
+              查看记录
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

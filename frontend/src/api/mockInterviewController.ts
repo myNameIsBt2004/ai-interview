@@ -34,3 +34,32 @@ export async function handleMockInterviewEventUsingPost(
     ...(options || {}),
   });
 }
+
+export async function listMyMockInterviewByPageUsingPost(
+  body: API.MockInterviewQueryRequest,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponsePageMockInterview_>(
+    "/api/mockInterview/my/list/page/vo",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      data: body,
+      ...(options || {}),
+    },
+  );
+}
+
+export async function getMockInterviewReportUsingGet(
+  params: API.getMockInterviewByIdUsingGETParams,
+  options?: { [key: string]: any },
+) {
+  return request<API.BaseResponseMockInterviewReportVO_>(
+    "/api/mockInterview/report/get",
+    {
+      method: "GET",
+      params: { ...params },
+      ...(options || {}),
+    },
+  );
+}

@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Collapse,
   Form,
   Input,
   InputNumber,
+  Modal,
   Select,
   Steps,
   Upload,
@@ -18,6 +19,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { addMockInterviewUsingPost } from "@/api/mockInterviewController";
+import { parseResumeUsingPost } from "@/api/resumeController";
 import {
   DIFFICULTY_OPTIONS,
   DURATION_OPTIONS,
@@ -27,6 +29,10 @@ import {
   JOB_OPTIONS,
   saveSetup,
 } from "@/libs/interviewStore";
+import {
+  createResumeThumbnail,
+  formatResumeDate,
+} from "@/libs/resumeThumbnail";
 import "./setup.css";
 
 const { TextArea } = Input;
@@ -35,12 +41,23 @@ const defaultDesc = `1. 参与后端功能开发和联调
 2. 写基础接口和单测
 3. 按团队规范提交代码`;
 
+type ResumePreview = {
+  name: string;
+  date: string;
+  thumbUrl: string | null;
+  fileUrl: string | null;
+  mime: string;
+};
 
 export default function InterviewSetupPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [resumeName, setResumeName] = useState<string>();
+  const [resumePreview, setResumePreview] = useState<ResumePreview | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [extraOpen, setExtraOpen] = useState<string[]>([]);
   const [form] = Form.useForm<InterviewSetupData>();
 
   const jobDescription = Form.useWatch("jobDescription", form) || "";
@@ -67,20 +84,69 @@ export default function InterviewSetupPage() {
     [],
   );
 
+  useEffect(() => {
+    return () => {
+      if (resumePreview?.fileUrl) {
+        URL.revokeObjectURL(resumePreview.fileUrl);
+      }
+    };
+  }, [resumePreview?.fileUrl]);
+
   const readResumeFile = async (file: File) => {
     setResumeName(file.name);
-    if (file.type.startsWith("text/") || /\.(txt|md|csv)$/i.test(file.name)) {
-      const text = await file.text();
-      const current = form.getFieldValue("personalDesc") || "";
+    setParsing(true);
+    const hide = message.loading("正在解析简历...", 0);
+
+    // 先本地生成缩略图，解析可并行
+    const fileUrl = URL.createObjectURL(file);
+    const thumbPromise = createResumeThumbnail(file);
+
+    try {
+      const res = await parseResumeUsingPost(file);
+      const thumbUrl = await thumbPromise.catch(() => null);
+      const data = res.data;
+      if (!data) {
+        throw new Error("解析结果为空");
+      }
       form.setFieldsValue({
-        personalDesc: current ? `${current}\n\n【简历摘录】\n${text.slice(0, 1800)}` : text.slice(0, 1800),
-        resumeName: file.name,
-        resumeText: text.slice(0, 5000),
+        resumeName: data.resumeName || file.name,
+        resumeText: data.resumeText,
+        personalDesc: data.personalDesc || form.getFieldValue("personalDesc"),
+        yearsOfExperience:
+          data.yearsOfExperience || form.getFieldValue("yearsOfExperience"),
+        coreSkills: data.coreSkills || form.getFieldValue("coreSkills"),
+        projectExperience:
+          data.projectExperience || form.getFieldValue("projectExperience"),
       });
-      message.success("简历内容已填入，缺的地方自己补一下就行");
-    } else {
+      setResumePreview((prev) => {
+        if (prev?.fileUrl) URL.revokeObjectURL(prev.fileUrl);
+        return {
+          name: data.resumeName || file.name,
+          date: formatResumeDate(),
+          thumbUrl,
+          fileUrl,
+          mime: file.type || "application/octet-stream",
+        };
+      });
+      setExtraOpen(["extra"]);
+      message.success("简历已解析，请核对项目经验是否完整");
+    } catch (e: any) {
       form.setFieldsValue({ resumeName: file.name });
-      message.info("文件已上传。PDF/Word 暂不能自动识别，请在下面自己填");
+      const thumbUrl = await thumbPromise.catch(() => null);
+      setResumePreview((prev) => {
+        if (prev?.fileUrl) URL.revokeObjectURL(prev.fileUrl);
+        return {
+          name: file.name,
+          date: formatResumeDate(),
+          thumbUrl,
+          fileUrl,
+          mime: file.type || "application/octet-stream",
+        };
+      });
+      message.error(e?.message || "简历解析失败，请手动填写");
+    } finally {
+      hide();
+      setParsing(false);
     }
     return false;
   };
@@ -116,9 +182,23 @@ export default function InterviewSetupPage() {
     const hide = message.loading("正在进入面试...", 0);
     try {
       const res = await addMockInterviewUsingPost({
+        interviewType: values.interviewType || "综合面试",
         jobPosition: values.jobPosition,
         workExperience: values.workExperience,
+        salaryMin: values.salaryMin,
+        salaryMax: values.salaryMax,
+        jobDescription: values.jobDescription,
+        companyName: values.companyName,
+        personalDesc: values.personalDesc,
+        yearsOfExperience: values.yearsOfExperience,
+        coreSkills: values.coreSkills,
+        projectExperience: values.projectExperience,
+        resumeName: values.resumeName,
+        resumeText: values.resumeText,
+        focus: values.focus || "综合面试",
+        duration: values.duration,
         difficulty: values.difficulty,
+        interviewer: values.interviewer,
       });
       hide();
       message.success("好了，开始吧");
@@ -200,25 +280,77 @@ export default function InterviewSetupPage() {
             <>
               <div className="resume-block">
                 <div className="resume-head">
-                  <h3>选择简历</h3>
-                  <Upload beforeUpload={readResumeFile} showUploadList={false} accept=".txt,.md,.pdf,.doc,.docx">
-                    <Button icon={<UploadOutlined />} className="btn-brand">
+                  <div>
+                    <h3>选择简历</h3>
+                    <div className="muted resume-sub">我的简历</div>
+                  </div>
+                  <Upload beforeUpload={readResumeFile} showUploadList={false} accept=".txt,.md,.pdf,.docx">
+                    <Button icon={<UploadOutlined />} className="btn-brand" loading={parsing}>
                       从本地导入
                     </Button>
                   </Upload>
                 </div>
-                {resumeName ? (
-                  <div className="resume-card">
-                    <div className="resume-thumb">PDF/TXT</div>
-                    <div>
-                      <div className="resume-name">{resumeName}</div>
-                      <div className="muted">已导入，下面还能继续改</div>
+                {resumePreview || resumeName ? (
+                  <div className="resume-rail">
+                    <div className="resume-tile">
+                      <div
+                        className="resume-tile-thumb"
+                        onClick={() => resumePreview?.thumbUrl && setPreviewOpen(true)}
+                      >
+                        {resumePreview?.thumbUrl ? (
+                          <img src={resumePreview.thumbUrl} alt="简历预览" />
+                        ) : (
+                          <div className="resume-thumb-fallback">预览生成中</div>
+                        )}
+                      </div>
+                      <div className="resume-tile-meta">
+                        <div className="resume-name" title={resumePreview?.name || resumeName}>
+                          {(resumePreview?.name || resumeName || "").replace(/\.[^.]+$/, "")}
+                        </div>
+                        <div className="muted">{resumePreview?.date || formatResumeDate()}</div>
+                        <button
+                          type="button"
+                          className="resume-view-btn"
+                          onClick={() => setPreviewOpen(true)}
+                          disabled={!resumePreview?.thumbUrl && !resumePreview?.fileUrl}
+                        >
+                          查看简历
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <div className="resume-empty muted">还没上传简历的话，直接在下面写也行</div>
                 )}
               </div>
+
+              <Modal
+                title={resumePreview?.name || "简历预览"}
+                open={previewOpen}
+                onCancel={() => setPreviewOpen(false)}
+                footer={null}
+                width={720}
+                destroyOnClose
+              >
+                {resumePreview?.mime === "application/pdf" ||
+                (resumePreview?.name || "").toLowerCase().endsWith(".pdf") ? (
+                  resumePreview?.fileUrl ? (
+                    <iframe
+                      src={resumePreview.fileUrl}
+                      title="resume-pdf"
+                      className="resume-iframe"
+                    />
+                  ) : null
+                ) : resumePreview?.thumbUrl ? (
+                  <img
+                    src={resumePreview.thumbUrl}
+                    alt="简历"
+                    className="resume-preview-full"
+                  />
+                ) : (
+                  <div className="muted">暂无预览</div>
+                )}
+              </Modal>
 
               <Form.Item
                 label="个人描述"
@@ -234,6 +366,10 @@ export default function InterviewSetupPage() {
 
               <Collapse
                 ghost
+                activeKey={extraOpen}
+                onChange={(keys) =>
+                  setExtraOpen(Array.isArray(keys) ? keys.map(String) : [String(keys)])
+                }
                 items={[
                   {
                     key: "extra",
@@ -256,8 +392,10 @@ export default function InterviewSetupPage() {
                         </Form.Item>
                         <Form.Item label="个人项目经验" name="projectExperience">
                           <TextArea
-                            rows={8}
-                            placeholder={"### 1. 项目名称\n**时间**: \n**项目详情**: "}
+                            rows={14}
+                            placeholder={
+                              "### 1. 项目名称\n**技术栈**: \n**项目详情**: \n\n### 2. 项目名称\n**技术栈**: \n**项目详情**: "
+                            }
                           />
                         </Form.Item>
                       </>

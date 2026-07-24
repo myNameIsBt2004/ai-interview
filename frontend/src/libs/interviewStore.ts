@@ -98,5 +98,13 @@ export const DURATION_OPTIONS = [
   { label: "60 分钟", value: 60 },
 ];
 
-export const INTERVIEWER_OPTIONS = ["程序员坤坤", "偏技术追问", "偏沟通引导"];
+export const INTERVIEWER_OPTIONS = ["坤坤", "偏技术追问", "偏沟通引导"];
+
+/** 面试官展示用短名（头像圆内） */
+export function interviewerShortName(name?: string) {
+  if (!name) return "坤坤";
+  if (name.includes("坤坤")) return "坤坤";
+  if (name.length <= 4) return name;
+  return name.slice(0, 4);
+}
 

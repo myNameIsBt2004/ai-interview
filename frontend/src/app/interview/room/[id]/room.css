@@ -100,30 +100,38 @@
 }
 
 .ai-avatar {
-  height: 160px;
+  height: 180px;
   border-radius: 10px;
-  background: linear-gradient(160deg, #2b2f3a, #1a1d24);
+  background: #2a2d33;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  color: #fff;
+  gap: 14px;
 }
 
 .ai-face {
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
-  background: var(--brand);
+  background: #f5c518;
   color: #1f2329;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
-  text-align: center;
-  padding: 6px;
+  font-size: 22px;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.ai-avatar-tip {
+  background: #fff7d6;
+  color: #a67c00;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .user-video {
@@ -204,6 +212,119 @@
 .ctrl:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* 结束面试确认 */
+.room-end-modal .ant-modal-content {
+  border-radius: 12px;
+  padding: 8px 4px 4px;
+}
+
+.end-confirm-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.end-confirm-icon {
+  color: #faad14;
+  font-size: 22px;
+}
+
+.end-confirm-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f1f1f;
+}
+
+.end-confirm-desc {
+  margin: 0 0 24px;
+  padding-left: 32px;
+  color: #595959;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.end-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.end-confirm-actions .ant-btn-primary {
+  background: #1677ff;
+}
+
+/* 面试完成弹窗 */
+.room-done-modal .ant-modal-content {
+  border-radius: 16px;
+  padding: 12px 8px 8px;
+}
+
+.done-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 12px 4px;
+}
+
+.done-check {
+  font-size: 56px;
+  color: #52c41a;
+  margin-bottom: 16px;
+}
+
+.done-modal h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.done-sub {
+  margin: 0 0 14px;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.done-desc {
+  margin: 0 0 16px;
+  color: #262626;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.done-eta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  margin-bottom: 22px;
+  background: #e6f4ff;
+  border: 1px solid #91caff;
+  border-radius: 8px;
+  color: #1677ff;
+  font-size: 14px;
+}
+
+.done-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.done-actions .ant-btn {
+  height: 40px;
+}
+
+.done-actions .ant-btn-primary {
+  background: #1677ff;
 }
 
 @media (max-width: 900px) {

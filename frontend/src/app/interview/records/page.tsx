@@ -1,17 +1,67 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Button, Empty, Tag } from "antd";
+import { Button, Empty, Spin, Tag } from "antd";
 import Link from "next/link";
-import { InterviewRecord, loadRecords } from "@/libs/interviewStore";
+import { listMyMockInterviewByPageUsingPost } from "@/api/mockInterviewController";
 import "./records.css";
 
+type RecordItem = {
+  id: number;
+  interviewType: string;
+  jobPosition: string;
+  difficulty: string;
+  companyName?: string;
+  durationMinutes?: number;
+  score?: number;
+  status: number;
+  startTime: string;
+};
+
 export default function InterviewRecordsPage() {
-  const [records, setRecords] = useState<InterviewRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<RecordItem[]>([]);
 
   useEffect(() => {
-    setRecords(loadRecords());
+    (async () => {
+      try {
+        const res = await listMyMockInterviewByPageUsingPost({
+          current: 1,
+          pageSize: 20,
+          sortField: "createTime",
+          sortOrder: "descend",
+        });
+        const list = (res.data?.records || []).map((r) => ({
+          id: r.id!,
+          interviewType: r.interviewType || "综合面试",
+          jobPosition: r.jobPosition || "未知岗位",
+          difficulty: r.difficulty || "--",
+          companyName: r.companyName,
+          durationMinutes: r.durationMinutes ?? r.duration,
+          score: r.score,
+          status: r.status ?? 0,
+          startTime: r.startTime
+            ? String(r.startTime).replace("T", " ").slice(0, 19)
+            : r.createTime
+              ? String(r.createTime).replace("T", " ").slice(0, 19)
+              : "--",
+        }));
+        setRecords(list);
+      } catch {
+        setRecords([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="page-wrap" style={{ textAlign: "center", padding: 80 }}>
+        <Spin size="large" tip="加载面试记录..." />
+      </div>
+    );
+  }
 
   return (
     <div className="page-wrap records-page">
@@ -51,7 +101,7 @@ export default function InterviewRecordsPage() {
                 </div>
                 <div>
                   <span>面试时长</span>
-                  <strong>{r.durationMinutes}分钟</strong>
+                  <strong>{r.durationMinutes ?? "--"}分钟</strong>
                 </div>
                 <div>
                   <span>开始时间</span>
@@ -59,12 +109,22 @@ export default function InterviewRecordsPage() {
                 </div>
               </div>
               <div className="record-footer">
-                <Tag color="success">已完成</Tag>
-                <Link href={`/interview/report/${r.id}`}>
-                  <Button type="primary" className="btn-brand">
-                    查看面试结果
-                  </Button>
-                </Link>
+                <Tag color={r.status === 2 ? "success" : r.status === 1 ? "processing" : "default"}>
+                  {r.status === 2 ? "已完成" : r.status === 1 ? "进行中" : "待开始"}
+                </Tag>
+                {r.status === 2 ? (
+                  <Link href={`/interview/report/${r.id}`}>
+                    <Button type="primary" className="btn-brand">
+                      查看面试结果
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href={`/interview/room/${r.id}`}>
+                    <Button type="primary" className="btn-brand">
+                      继续面试
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           ))}
