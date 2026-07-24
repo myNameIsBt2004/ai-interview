@@ -49,6 +49,12 @@
             <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
             <version>0.2.20</version>
         </dependency>
+        <!-- 简历 PDF 文本提取 -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

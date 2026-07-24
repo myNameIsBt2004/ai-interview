@@ -4,3 +4,21 @@
 ai:
   apiKey: 请填写你的火山方舟APIKey
   model: 请填写模型ID或推理接入点ID
+  tts:
+    # browser = 浏览器自带 speechSynthesis；volc = 火山引擎第三方音色
+    provider: browser
+    # 以下仅在 provider=volc 时需要（语音技术控制台 AppID / Token，不是方舟 Ark Key）
+    # 申请：https://console.volcengine.com/speech
+    # 同时用于语音转文字（需开通「录音文件识别」能力）
+    appId: 请填写语音应用AppID
+    accessToken: 请填写AccessToken
+    cluster: volcano_tts
+    # 免费音色示例：BV001_streaming / BV002_streaming
+    voiceType: BV001_streaming
+  asr:
+    enabled: true
+    # 可留空，默认复用上面 tts 的 appId/accessToken
+    # 若报 requested resource not granted：去语音控制台给该应用开通「录音文件识别」
+    # 控制台：https://console.volcengine.com/speech/app
+    # resourceId 示例：volc.bigasr.auc 或 volc.seedasr.auc（以控制台为准）
+    # resourceId: volc.seedasr.auc

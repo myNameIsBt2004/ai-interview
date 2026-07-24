@@ -25,6 +25,47 @@ public class MockInterview implements Serializable {
 
     private String difficulty;
 
+    /** 面试类型，如综合面试 */
+    private String interviewType;
+
+    private Integer salaryMin;
+
+    private Integer salaryMax;
+
+    private String jobDescription;
+
+    private String companyName;
+
+    private String personalDesc;
+
+    private String yearsOfExperience;
+
+    private String coreSkills;
+
+    private String projectExperience;
+
+    private String resumeName;
+
+    private String resumeText;
+
+    private String focus;
+
+    /** 计划面试时长（分钟） */
+    private Integer duration;
+
+    private String interviewer;
+
+    /** 综合得分 */
+    private Integer score;
+
+    /** 实际面试时长（分钟） */
+    private Integer durationMinutes;
+
+    /** 结构化评估报告 JSON */
+    private String reportJson;
+
+    private Date startTime;
+
     /**
      * 消息列表（JSON）
      */

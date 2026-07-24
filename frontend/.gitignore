@@ -5,3 +5,12 @@ out
 dist
 *.log
 .env*.local
+
+
+# 忽略 Word 解压产生的所有垃圾
+doc_media/
+*.xml
+*.ps1
+*.docx
+_tmp_*.txt
+doc_extract.txt

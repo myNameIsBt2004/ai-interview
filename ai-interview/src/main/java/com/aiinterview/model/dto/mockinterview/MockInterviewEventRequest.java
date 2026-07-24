@@ -16,5 +16,8 @@ public class MockInterviewEventRequest implements Serializable {
 
     private Long id;
 
+    /** 结束面试时可选：实际时长（分钟） */
+    private Integer durationMinutes;
+
     private static final long serialVersionUID = 1L;
 }

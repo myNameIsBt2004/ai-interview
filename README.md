@@ -57,8 +57,7 @@ MySQL (ai_interview)
 ```
 ├── ai-interview/                 # Spring Boot 后端
 │   ├── sql/
-│   │   ├── create_table.sql      # 建库建表 + 默认账号
-│   │   └── alter_mock_interview_v2.sql  # 已有库升级
+│   │   └── create_table.sql      # 唯一初始化脚本：建库建表 + 默认账号
 │   └── src/main/java/com/aiinterview/
 │       ├── controller/           # 用户 / 面试 / 简历 / ASR / TTS
 │       ├── service/              # 业务逻辑
@@ -88,15 +87,17 @@ MySQL (ai_interview)
 
 ### 1. 初始化数据库
 
-执行 `ai-interview/sql/create_table.sql`，会创建库 `ai_interview`、用户表、模拟面试表。
+只需执行一份脚本：
 
-默认账号：
+`ai-interview/sql/create_table.sql`
+
+会创建库 `ai_interview`、`user` / `mock_interview` 表，并写入默认账号。
 
 | 账号 | 密码 |
 |------|------|
 | `admin` | `12345678` |
 
-已有旧库请再执行：`ai-interview/sql/alter_mock_interview_v2.sql`。
+若本地已有旧版 `mock_interview` 表结构不兼容，可先备份后删除该表，再重新执行上述脚本（`CREATE TABLE IF NOT EXISTS` 不会自动改已有表结构）。
 
 ### 2. 配置后端密钥
 

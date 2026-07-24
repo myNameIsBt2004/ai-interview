@@ -12,6 +12,7 @@ import com.aiinterview.model.dto.mockinterview.MockInterviewEventRequest;
 import com.aiinterview.model.dto.mockinterview.MockInterviewQueryRequest;
 import com.aiinterview.model.entity.MockInterview;
 import com.aiinterview.model.entity.User;
+import com.aiinterview.model.vo.MockInterviewReportVO;
 import com.aiinterview.service.MockInterviewService;
 import com.aiinterview.service.UserService;
 import jakarta.annotation.Resource;
@@ -112,5 +113,15 @@ public class MockInterviewController {
         User loginUser = userService.getLoginUser(request);
         String aiResponse = mockInterviewService.handleMockInterviewEvent(mockInterviewEventRequest, loginUser);
         return ResultUtils.success(aiResponse);
+    }
+
+    /**
+     * 获取面试评估报告（结束后可查看）
+     */
+    @GetMapping("/report/get")
+    public BaseResponse<MockInterviewReportVO> getMockInterviewReport(long id, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        MockInterviewReportVO report = mockInterviewService.getReport(id, loginUser);
+        return ResultUtils.success(report);
     }
 }
