@@ -248,16 +248,9 @@ npm run dev
 ---
 
 ## 界面展示
+<img width="983" height="790" alt="image-20260724160312224" src="https://github.com/user-attachments/assets/a67b1a2f-70b5-4985-a591-17f57f2a9d3a" />
+<img width="991" height="797" alt="63fb8fbfa007acf37cd0e6dfe0d5d064" src="https://github.com/user-attachments/assets/ffb84a92-8316-4ce1-8a54-c9d04d4f4aab" />
 
-![image-20260724160312224](README.assets/image-20260724160312224.png)
-
-![63fb8fbfa007acf37cd0e6dfe0d5d064](README.assets/63fb8fbfa007acf37cd0e6dfe0d5d064.jpg)
-
-![e459122363340bae2ff22ef29f0ffa3d](README.assets/e459122363340bae2ff22ef29f0ffa3d.png)
-
-![3b6d18679037cd77a36de0fb107360c8](README.assets/3b6d18679037cd77a36de0fb107360c8.png)
-
-![af2cc4e2027f37576623c6dd5854d496](README.assets/af2cc4e2027f37576623c6dd5854d496.png)
 
 
 
