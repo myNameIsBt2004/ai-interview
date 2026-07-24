@@ -22,7 +22,7 @@ import {
 import { getAsrConfigUsingGet, recognizeAsrUsingPost } from "@/api/asrController";
 import {
   InterviewRecord,
-  interviewerShortName,
+  INTERVIEWER_AVATAR,
   loadSetup,
   saveRecord,
 } from "@/libs/interviewStore";
@@ -422,10 +422,12 @@ export default function InterviewRoomPage() {
         <div className="video-card card">
           <div className="video-label">AI 面试官</div>
           <div className="ai-avatar">
-            <div className="ai-face">
-              {interviewerShortName(setup?.interviewer)}
-            </div>
-            <div className="ai-avatar-tip">仅展示形象，无需摄像头</div>
+            <img
+              className="ai-face"
+              src={INTERVIEWER_AVATAR}
+              alt={setup?.interviewer || "AI 面试官"}
+            />
+            <div className="ai-avatar-tip">{setup?.interviewer || "坤坤"}</div>
           </div>
         </div>
         <div className="video-card card">

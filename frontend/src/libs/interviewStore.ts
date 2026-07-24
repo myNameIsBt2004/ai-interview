@@ -85,6 +85,7 @@ export const JOB_OPTIONS = [
   "算法工程师",
   "测试开发工程师",
   "全栈工程师",
+  "agent开发工程师",
 ];
 
 export const EXPERIENCE_OPTIONS = ["校招应届", "1年以内", "1-3年", "3-5年", "5年以上"];
@@ -100,11 +101,6 @@ export const DURATION_OPTIONS = [
 
 export const INTERVIEWER_OPTIONS = ["坤坤", "偏技术追问", "偏沟通引导"];
 
-/** 面试官展示用短名（头像圆内） */
-export function interviewerShortName(name?: string) {
-  if (!name) return "坤坤";
-  if (name.includes("坤坤")) return "坤坤";
-  if (name.length <= 4) return name;
-  return name.slice(0, 4);
-}
+/** 面试官头像（房间侧栏展示） */
+export const INTERVIEWER_AVATAR = "/interviewers/avatar.jpeg";
 
