@@ -2,8 +2,6 @@
 
 基于大模型的 **AI 模拟面试** 前后端独立项目：按岗位与简历定制面试官，支持语音问答，结束后生成结构化评估报告。
 
-源自 [mianshiya-next](https://github.com/liyupi/mianshiya-next) 中的模拟面试能力，已精简为可单独运行的完整应用。
-
 ---
 
 ## 功能概览
@@ -96,8 +94,6 @@ MySQL (ai_interview)
 | 账号 | 密码 |
 |------|------|
 | `admin` | `12345678` |
-
-若本地已有旧版 `mock_interview` 表结构不兼容，可先备份后删除该表，再重新执行上述脚本（`CREATE TABLE IF NOT EXISTS` 不会自动改已有表结构）。
 
 ### 2. 配置后端密钥
 
@@ -245,13 +241,32 @@ npm run dev
 
 ## 说明与限制
 
-- 已去掉原项目中与本功能无关的 Sa-Token / Redis / ES 等依赖
 - 麦克风能力需 **HTTPS** 或 `localhost`
 - `ScriptProcessorNode` 用于录音处理，兼容性好；后续可迁移至 AudioWorklet
 - 报告页含能力雷达、技能矩阵、学习路线、题目解析，并可下载 PDF
 
 ---
 
-## License / 来源
+## 界面展示
 
-业务逻辑抽取自 [mianshiya-next @ c568c84](https://github.com/liyupi/mianshiya-next/commit/c568c84b30a77961a85512e2f7bff63c06820d5a)，本仓库为独立可运行版本。
+![image-20260724160312224](README.assets/image-20260724160312224.png)
+
+![63fb8fbfa007acf37cd0e6dfe0d5d064](README.assets/63fb8fbfa007acf37cd0e6dfe0d5d064.jpg)
+
+![e459122363340bae2ff22ef29f0ffa3d](README.assets/e459122363340bae2ff22ef29f0ffa3d.png)
+
+![3b6d18679037cd77a36de0fb107360c8](README.assets/3b6d18679037cd77a36de0fb107360c8.png)
+
+![af2cc4e2027f37576623c6dd5854d496](README.assets/af2cc4e2027f37576623c6dd5854d496.png)
+
+
+
+## 面试报告展示
+
+![image-20260724160445420](README.assets/image-20260724160445420.png)
+
+![image-20260724160531619](README.assets/image-20260724160531619.png)
+
+![image-20260724160549115](README.assets/image-20260724160549115.png)
+
+![image-20260724160559808](README.assets/image-20260724160559808.png)
