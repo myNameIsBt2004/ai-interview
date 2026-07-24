@@ -2,8 +2,6 @@
 
 基于大模型的 **AI 模拟面试** 前后端独立项目：按岗位与简历定制面试官，支持语音问答，结束后生成结构化评估报告。
 
-源自 [mianshiya-next](https://github.com/liyupi/mianshiya-next) 中的模拟面试能力，已精简为可单独运行的完整应用。
-
 ---
 
 ## 功能概览
@@ -97,11 +95,7 @@ MySQL (ai_interview)
 |------|------|
 | `admin` | `12345678` |
 
-若本地已有旧版 `mock_interview` 表结构不兼容，可先备份后删除该表，再重新执行上述脚本（`CREATE TABLE IF NOT EXISTS` 不会自动改已有表结构）。
-
 ### 2. 配置后端密钥
-
-**不要把真实 Key 写进会提交的 `application.yml`。**
 
 #### 方式 A（推荐）：本地私有配置
 
@@ -239,19 +233,16 @@ npm run dev
 | `AI_ASR_ENABLED` | 是否启用 ASR |
 | `AI_ASR_APP_ID` 等 | 可覆盖 ASR 凭证；默认复用 TTS |
 
-数据库默认连接见 `application.yml`（`localhost:3306`，库名 `ai_interview`，用户 `root` / `123456`），请按本地环境修改。
+数据库默认连接请按本地环境修改。
 
 ---
 
 ## 说明与限制
-
-- 已去掉原项目中与本功能无关的 Sa-Token / Redis / ES 等依赖
 - 麦克风能力需 **HTTPS** 或 `localhost`
 - `ScriptProcessorNode` 用于录音处理，兼容性好；后续可迁移至 AudioWorklet
 - 报告页含能力雷达、技能矩阵、学习路线、题目解析，并可下载 PDF
 
 ---
 
-## License / 来源
+## 界面展示
 
-业务逻辑抽取自 [mianshiya-next @ c568c84](https://github.com/liyupi/mianshiya-next/commit/c568c84b30a77961a85512e2f7bff63c06820d5a)，本仓库为独立可运行版本。
