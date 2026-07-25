@@ -49,6 +49,18 @@
             <artifactId>volcengine-java-sdk-ark-runtime</artifactId>
             <version>0.2.20</version>
         </dependency>
+        <!-- 阿里云 DashVector 向量检索 -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>dashvector-java-sdk</artifactId>
+            <version>1.0.19</version>
+        </dependency>
+        <!-- 阿里云 DashScope Embedding -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>dashscope-sdk-java</artifactId>
+            <version>2.20.6</version>
+        </dependency>
         <!-- 简历 PDF 文本提取 -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

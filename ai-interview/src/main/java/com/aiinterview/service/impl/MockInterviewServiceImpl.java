@@ -22,10 +22,13 @@ import com.aiinterview.model.entity.MockInterview;
 import com.aiinterview.model.entity.User;
 import com.aiinterview.model.enums.MockInterviewEventEnum;
 import com.aiinterview.model.enums.MockInterviewStatusEnum;
+import com.aiinterview.model.vo.KnowledgePointVO;
 import com.aiinterview.model.vo.MockInterviewReportVO;
+import com.aiinterview.service.KnowledgePointService;
 import com.aiinterview.service.MockInterviewService;
 import com.aiinterview.utils.SqlUtils;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -40,6 +43,7 @@ import java.util.stream.Collectors;
 /**
  * 模拟面试 Service 实现
  */
+@Slf4j
 @Service
 public class MockInterviewServiceImpl extends ServiceImpl<MockInterviewMapper, MockInterview>
         implements MockInterviewService {
@@ -97,6 +101,9 @@ public class MockInterviewServiceImpl extends ServiceImpl<MockInterviewMapper, M
 
     @Resource
     private AiManager aiManager;
+
+    @Resource
+    private KnowledgePointService knowledgePointService;
 
     @Override
     public Long createMockInterview(MockInterviewAddRequest mockInterviewAddRequest, User loginUser) {
@@ -337,15 +344,75 @@ public class MockInterviewServiceImpl extends ServiceImpl<MockInterviewMapper, M
             }
             sb.append("- 简历摘录：\n").append(resume).append("\n");
         }
+        appendKnowledgePoints(sb, m);
         sb.append("""
                 请你向我依次提出问题（最多 20 个问题），并结合岗位描述与候选人背景做针对性追问。在这期间请完全保持真人面试官的口吻。
                 必须满足如下要求：
-                1. 当学员回复 “开始” 时，你要正式开始面试
+                1. 当学员回复 “开始” 时，你要正式开始面试；开场第一件事必须请候选人做自我介绍（即使系统已提供简历或个人描述，也不可跳过，简历仅作参考，不能代替口头自我介绍）
                 2. 当学员表示希望 “结束面试” 时，你要结束面试
                 3. 此外，当你觉得这场面试可以结束时（比如候选人回答结果较差、不满足工作年限的招聘需求、或者候选人态度不礼貌），必须主动提出面试结束，不用继续询问更多问题了。并且要在回复中包含字符串【面试结束】
                 4. 面试结束后，应该给出候选人整场面试的表现和总结。
                 """);
         return sb.toString();
+    }
+
+    /**
+     * 按岗位与技能栈从向量库召回知识点，注入面试考察范围（失败则静默跳过）
+     */
+    private void appendKnowledgePoints(StringBuilder sb, MockInterview m) {
+        if (knowledgePointService == null || !knowledgePointService.isAvailable()) {
+            return;
+        }
+        try {
+            String query = buildKnowledgeQuery(m);
+            if (StrUtil.isBlank(query)) {
+                return;
+            }
+            List<KnowledgePointVO> points = knowledgePointService.search(query, null);
+            if (points == null || points.isEmpty()) {
+                return;
+            }
+            sb.append("""
+                    以下知识点来自知识库，仅作为本轮「优先考察方向」，不是唯一出题范围：
+                    - 可围绕它们提问与追问，但勿整段照抄原文
+                    - 除优先点外，仍须结合岗位核心能力、核心技能与简历/项目经历做覆盖，保证考察面完整
+                    - 不要把整场面试都困在知识库条目上；优先点大约占提问比重的一部分即可，其余留给岗位与候选人背景
+                    优先知识点：
+                    """);
+            int index = 1;
+            for (KnowledgePointVO point : points) {
+                String title = StrUtil.blankToDefault(point.getTitle(), point.getId());
+                String content = StrUtil.blankToDefault(point.getContent(), "");
+                if (content.length() > 280) {
+                    content = content.substring(0, 280) + "…";
+                }
+                sb.append(index++).append(". 【").append(title).append("】");
+                if (StrUtil.isNotBlank(point.getSkillTags())) {
+                    sb.append("（技能：").append(point.getSkillTags()).append("）");
+                }
+                sb.append(" ").append(content).append("\n");
+            }
+        } catch (Exception e) {
+            log.warn("注入知识点失败，已跳过: {}", e.getMessage());
+        }
+    }
+
+    private String buildKnowledgeQuery(MockInterview m) {
+        StringBuilder q = new StringBuilder();
+        if (StrUtil.isNotBlank(m.getJobPosition())) {
+            q.append(m.getJobPosition()).append(' ');
+        }
+        if (StrUtil.isNotBlank(m.getCoreSkills())) {
+            q.append(m.getCoreSkills()).append(' ');
+        }
+        if (StrUtil.isNotBlank(m.getJobDescription())) {
+            String jd = m.getJobDescription().trim();
+            if (jd.length() > 800) {
+                jd = jd.substring(0, 800);
+            }
+            q.append(jd);
+        }
+        return q.toString().trim();
     }
 
     private void generateAndSaveReport(MockInterview mockInterview, String fallbackSummary) {

@@ -1,6 +1,8 @@
 spring:
   application:
     name: ai-interview
+  config:
+    import: optional:classpath:application-local.yml
   servlet:
     multipart:
       max-file-size: 10MB
@@ -54,3 +56,19 @@ ai:
     accessToken: ${AI_ASR_ACCESS_TOKEN:}
     apiKey: ${AI_ASR_API_KEY:}
     resourceId: ${AI_ASR_RESOURCE_ID:volc.bigasr.auc}
+
+# 阿里云知识点向量库（DashVector + DashScope Embedding）
+# 密钥请写在 application-local.yml 或环境变量，勿提交到仓库
+aliyun:
+  dashscope:
+    apiKey: ${DASHSCOPE_API_KEY:}
+    embeddingModel: ${DASHSCOPE_EMBEDDING_MODEL:text-embedding-v3}
+  dashvector:
+    enabled: ${DASHVECTOR_ENABLED:false}
+    apiKey: ${DASHVECTOR_API_KEY:}
+    endpoint: ${DASHVECTOR_ENDPOINT:}
+    # 建议用新名称；旧的 interview_kp / interview_knowledge 若创建失败可换 interview_rag
+    collection: ${DASHVECTOR_COLLECTION:interview_rag}
+    dimension: 1024
+    topK: 5
+    vectorField: ${DASHVECTOR_VECTOR_FIELD:embedding}

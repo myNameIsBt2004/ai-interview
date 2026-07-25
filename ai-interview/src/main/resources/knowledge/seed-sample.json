@@ -1,0 +1,37 @@
+[
+  {
+    "id": "java_hashmap_01",
+    "title": "HashMap 底层结构与扩容",
+    "skillTags": "Java,集合",
+    "difficulty": "中级",
+    "content": "考察点：JDK8 后数组+链表/红黑树；负载因子 0.75；扩容 2 倍与 rehash；hash 扰动；线程不安全与 ConcurrentHashMap 区别。追问：为何树化阈值是 8、退化为链表阈值为 6。"
+  },
+  {
+    "id": "spring_ioc_01",
+    "title": "Spring IoC 与依赖注入",
+    "skillTags": "Java,Spring",
+    "difficulty": "中级",
+    "content": "考察点：IoC 容器、Bean 生命周期（实例化→属性填充→初始化→销毁）、构造器注入 vs 字段注入、循环依赖与三级缓存。追问：prototype 循环依赖为何无法解决。"
+  },
+  {
+    "id": "mysql_index_01",
+    "title": "MySQL 索引与 B+Tree",
+    "skillTags": "MySQL,数据库",
+    "difficulty": "中级",
+    "content": "考察点：B+Tree 叶子存数据、最左前缀、覆盖索引、回表；什么时候索引失效（函数、隐式转换、范围条件后列）。追问：联合索引 (a,b,c) 对 where b=? 是否可用。"
+  },
+  {
+    "id": "redis_persist_01",
+    "title": "Redis 持久化与高可用",
+    "skillTags": "Redis,缓存",
+    "difficulty": "中级",
+    "content": "考察点：RDB 与 AOF 差异、混合持久化；缓存穿透/击穿/雪崩对策；主从复制与哨兵。追问：大 key、热 key 如何处理。"
+  },
+  {
+    "id": "jvm_gc_01",
+    "title": "JVM 内存模型与垃圾回收",
+    "skillTags": "Java,JVM",
+    "difficulty": "中级",
+    "content": "考察点：堆分代、栈与方法区；可达性分析；常见 GC（G1 思路）；OOM 排查思路。追问：Young GC 与 Full GC 触发条件。"
+  }
+]
