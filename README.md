@@ -20,12 +20,12 @@
 ---
 
 ## 技术栈
-
 **后端** `ai-interview/`
 
 - Java 17 · Spring Boot 3.3 · MyBatis-Plus · MySQL 8
 - 火山方舟（Ark）大模型 · PDFBox（简历文本）
 - 可选：火山语音 TTS / ASR
+- 可选：阿里云 DashScope Embedding + DashVector（知识点向量库）
 
 **前端** `frontend/`
 
@@ -41,8 +41,9 @@
     │  Cookie Session
     ▼
 Spring Boot API (:8101/api)
-    ├── 用户 / 模拟面试 / 简历
+    ├── 用户 / 模拟面试 / 简历 / 知识点
     ├── 火山方舟 LLM ──► 追问 & 评估报告
+    ├── DashScope Embedding + DashVector（可选）──► 考点召回 → 注入 Prompt
     ├── 火山 ASR（可选）──► 语音转文字
     └── 火山 TTS（可选）──► 面试官朗读
     ▼
@@ -57,10 +58,13 @@ MySQL (ai_interview)
 ├── ai-interview/                 # Spring Boot 后端
 │   ├── sql/
 │   │   └── create_table.sql      # 唯一初始化脚本：建库建表 + 默认账号
+│   ├── src/main/resources/
+│   │   └── knowledge/
+│   │       └── seed-sample.json  # 内置样例知识点
 │   └── src/main/java/com/aiinterview/
-│       ├── controller/           # 用户 / 面试 / 简历 / ASR / TTS
-│       ├── service/              # 业务逻辑
-│       ├── manager/              # AI / 火山语音封装
+│       ├── controller/           # 用户 / 面试 / 简历 / 知识点 / ASR / TTS
+│       ├── service/              # 业务逻辑（含 KnowledgePointService）
+│       ├── manager/              # AI / Embedding / DashVector HTTP / 火山语音
 │       └── ...
 ├── frontend/                     # Next.js 前端
 │   └── src/
@@ -79,6 +83,7 @@ MySQL (ai_interview)
 - MySQL **8+**
 - [火山引擎方舟](https://console.volcengine.com/ark) API Key（对话模型）
 - （可选）[火山语音](https://console.volcengine.com/speech) AppID / Token（ASR、云端 TTS）
+- （可选）[阿里云 DashScope](https://dashscope.console.aliyun.com/) API Key（Embedding）+ [DashVector](https://dashvector.console.aliyun.com/) Cluster（向量库）
 
 ---
 
@@ -96,51 +101,6 @@ MySQL (ai_interview)
 |------|------|
 | `admin` | `12345678` |
 
-### 2. 配置后端密钥
-
-**不要把真实 Key 写进会提交的 `application.yml`。**
-
-#### 方式 A（推荐）：本地私有配置
-
-```bash
-cd ai-interview/src/main/resources
-# Windows
-copy application-local.yml.example application-local.yml
-# macOS / Linux
-cp application-local.yml.example application-local.yml
-```
-
-编辑 `application-local.yml`（已在 `.gitignore` 中）：
-
-```yaml
-ai:
-  apiKey: 你的火山方舟APIKey
-  model: 你的模型ID或推理接入点ID
-  tts:
-    provider: browser   # browser | volc
-    # provider=volc 时填写语音控制台凭证（可同时给 ASR 用）
-    appId: ""
-    accessToken: ""
-  asr:
-    enabled: true
-```
-
-启动时启用 `local` profile：
-
-```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=local
-```
-
-IDEA：Run Configuration → Active profiles 填 `local`。
-
-#### 方式 B：环境变量
-
-```bash
-# Windows CMD 示例
-set AI_API_KEY=你的Key
-set AI_MODEL=你的模型ID
-mvn spring-boot:run
-```
 
 ### 3. 启动后端
 
